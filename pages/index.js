@@ -4,6 +4,8 @@ import HeadComponent from '../components/Head';
 // Constants
 const TWITTER_HANDLE = "dev_kaleab";
 const TWITTER_LINK = `https://twitter.com/${TWITTER_HANDLE}`;
+const TWITTER="_buildspace";
+const TWITTER_L= `https://twitter.com/${TWITTER}`;
 
 const App = () => {
   
@@ -14,11 +16,11 @@ const App = () => {
       <div className="container">
         <header className="header-container">
           <p className="header"> 😎 Buildspace Pokemon Store 💖</p>
-          <p className="sub-text">The only emoji store that  accept  Phantom wallet</p>
+          <p className="sub-text">A Pokemon Character  store that  accept  Phantom wallet</p>
         </header>
 
         <main>
-          <img src="https://media.giphy.com/media/eSwGh3YK54JKU/giphy.gif" alt="emoji" />
+          <img src="https://media.giphy.com/media/cXpK2g8go9HxFJBjGD/giphy.gif" alt="emoji" />
         </main>
 
         <div className="footer-container">
@@ -28,7 +30,7 @@ const App = () => {
             href={TWITTER_LINK}
             target="_blank"
             rel="noreferrer"
-          >{`built on @${TWITTER_HANDLE}`}</a>
+          >{`built by @${TWITTER_HANDLE} with @${TWITTER}`}</a>
         </div>
       </div>
     </div>
