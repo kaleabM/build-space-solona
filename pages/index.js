@@ -1,8 +1,10 @@
-import React from "react";
+
 import { PublicKey } from '@solana/web3.js';
 import { useWallet } from '@solana/wallet-adapter-react';
 import { WalletMultiButton } from '@solana/wallet-adapter-react-ui';
 
+import React, { useEffect, useState } from 'react';
+import Product from "../components/Product";
 import HeadComponent from '../components/Head';
 
 // Constants
@@ -13,6 +15,19 @@ const TWITTER_L= `https://twitter.com/${TWITTER}`;
 
 const App = () => {
   const {publicKey} = useWallet();
+  const [products,setProducts] = useState([]);
+
+
+  useEffect(() => {
+    if (publicKey) {
+      fetch(`/api/fetchProducts`)
+        .then(response => response.json())
+        .then(data => {
+          setProducts(data);
+          console.log("Products", data);
+        });
+    }
+  }, [publicKey]);
 
 
   const renderNotConnectedContainer = () => (
@@ -22,6 +37,15 @@ const App = () => {
       <div className="button-container">
         <WalletMultiButton className="cta-button connect-wallet-button" />
       </div>    
+    </div>
+  );
+
+
+  const renderItemBuyContainer = () => (
+    <div className="products-container">
+      {products.map((product) => (
+        <Product key={product.id} product={product} />
+      ))}
     </div>
   );
   
@@ -36,10 +60,13 @@ const App = () => {
 
         <main>
         
-          {publicKey ? 'Connected!' : renderNotConnectedContainer()}
+          {publicKey ? renderItemBuyContainer() : renderNotConnectedContainer()}
 
         </main>
 
+<br></br>
+<br></br>
+<br></br>
         <div className="footer-container">
           <img alt="Twitter Logo" className="twitter-logo" src="twitter-logo.svg" />
           <a
