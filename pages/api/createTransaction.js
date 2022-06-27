@@ -7,11 +7,17 @@ import {
   SystemProgram,
   LAMPORTS_PER_SOL,
 } from "@solana/web3.js";
+import { createTransferCheckedInstruction, getAssociatedTokenAddress, getMint } from "@solana/spl-token";
 import BigNumber from "bignumber.js";
 import products from "./products.json";
 
+const usdcAddress = new PublicKey("Gh9ZwEmdLJ8DscKNTkTqPbNwLNNBjuSzaG9Vp2KGtKJr");
 const sellerAddress = 'Abf4ZnLtwUjk8A4Y2c5Kvtq2mmjMYzXdsrVi8qfy3x5w'
 const sellerPublicKey = new PublicKey(sellerAddress);
+
+// const sellerAddress = "B1aLAAe4vW8nSQCetXnYqJfRxzTjnbooczwkUJAr7yMS";
+// const sellerPublicKey = new PublicKey(sellerAddress);
+
 
 const createTransaction = async (req, res) => {
     try {
@@ -36,30 +42,51 @@ const createTransaction = async (req, res) => {
           message: "Item not found. please check item ID",
         });
       }
-      const bigAmount = BigNumber(itemPrice);
+    const bigAmount = BigNumber(itemPrice);
     const buyerPublicKey = new PublicKey(buyer);
+
     const network = WalletAdapterNetwork.Devnet;
     const endpoint = clusterApiUrl(network);
     const connection = new Connection(endpoint);
 
-    // A blockhash is sort of like an ID for a block. It lets you identify each block.
+    const buyerUsdcAddress = await getAssociatedTokenAddress(usdcAddress, buyerPublicKey);
+    const shopUsdcAddress = await getAssociatedTokenAddress(usdcAddress, sellerPublicKey);
     const { blockhash } = await connection.getLatestBlockhash("finalized");
     
+    const usdcMint = await getMint(connection, usdcAddress);
+
+    
+    const tx= new Transaction(
+        {
+       recentBlockhash: blockhash,
+         feePayer: buyerPublicKey,
+        }
+    );
+
+
     // The first two things we need - a recent block ID 
     // and the public key of the fee payer 
-    const tx = new Transaction({
-      recentBlockhash: blockhash,
-      feePayer: buyerPublicKey,
-    });
+    // const tx = new Transaction({
+    //   recentBlockhash: blockhash,
+    //   feePayer: buyerPublicKey,
+    // });
 
     // This is the "action" that the transaction will take
     // We're just going to transfer some SOL
-    const transferInstruction = SystemProgram.transfer({
-      fromPubkey: buyerPublicKey,
-      // Lamports are the smallest unit of SOL, like Gwei with Ethereum
-      lamports: bigAmount.multipliedBy(LAMPORTS_PER_SOL).toNumber(), 
-      toPubkey: sellerPublicKey,
-    });
+    // const transferInstruction = SystemProgram.transfer({
+    //   fromPubkey: buyerPublicKey,
+    //   // Lamports are the smallest unit of SOL, like Gwei with Ethereum
+    //   lamports: bigAmount.multipliedBy(LAMPORTS_PER_SOL).toNumber(), 
+    //   toPubkey: sellerPublicKey,
+    // });
+    const transferInstruction = createTransferCheckedInstruction(
+        buyerUsdcAddress, 
+        usdcAddress,     // This is the address of the token we want to transfer
+        shopUsdcAddress, 
+        buyerPublicKey, 
+        bigAmount.toNumber() * 10 ** (await usdcMint).decimals, 
+        usdcMint.decimals // The token could have any number of decimals
+      );
 
     // We're adding more instructions to the transaction
     transferInstruction.keys.push({
@@ -80,13 +107,13 @@ const createTransaction = async (req, res) => {
     res.status(200).json({
       transaction: base64,
     });
-  } catch (error) {
-    console.error(error);
+  } catch (err) {
+    console.error(err);
 
-    res.status(500).json({ error: "error creating tx" });
+    res.status(500).json({ error: "error creating t" });
     return;
   }
-}
+};
 
 export default function handler(req, res) {
   if (req.method === "POST") {
