@@ -64,7 +64,7 @@ export default function Buy({ itemID }) {
             clearInterval(interval);
             setStatus(STATUS.Paid);
             setLoading(false);
-            alert("Thank you for your purchase!");
+            alert("Teddaaaaaa....Thank you for your purchase!");
           }
         } catch (e) {
           if (e instanceof FindReferenceError) {
