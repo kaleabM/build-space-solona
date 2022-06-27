@@ -2,7 +2,7 @@
 import { PublicKey } from '@solana/web3.js';
 import { useWallet } from '@solana/wallet-adapter-react';
 import { WalletMultiButton } from '@solana/wallet-adapter-react-ui';
-
+import CreateProduct from "../components/CreateProduct";
 import React, { useEffect, useState } from 'react';
 import Product from "../components/Product";
 import HeadComponent from '../components/Head';
@@ -15,8 +15,19 @@ const TWITTER_L= `https://twitter.com/${TWITTER}`;
 
 const App = () => {
   const {publicKey} = useWallet();
+  const isOwner = ( publicKey ? publicKey.toString() === process.env.NEXT_PUBLIC_OWNER_PUBLIC_KEY : false );
+  const [creating, setCreating] = useState(false);
   const [products,setProducts] = useState([]);
 
+  const renderNotConnectedContainer = () => (
+    <div>
+       <img src="https://media.giphy.com/media/cXpK2g8go9HxFJBjGD/giphy.gif" alt="emoji" />
+
+      <div className="button-container">
+        <WalletMultiButton className="cta-button connect-wallet-button" />
+      </div>    
+    </div>
+  );
 
   useEffect(() => {
     if (publicKey) {
@@ -30,16 +41,7 @@ const App = () => {
   }, [publicKey]);
 
 
-  const renderNotConnectedContainer = () => (
-    <div>
-       <img src="https://media.giphy.com/media/cXpK2g8go9HxFJBjGD/giphy.gif" alt="emoji" />
-
-      <div className="button-container">
-        <WalletMultiButton className="cta-button connect-wallet-button" />
-      </div>    
-    </div>
-  );
-
+ 
 
   const renderItemBuyContainer = () => (
     <div className="products-container">
@@ -56,10 +58,17 @@ const App = () => {
         <header className="header-container">
           <p className="header"> 😎 Buildspace Pokemon Store 💖</p>
           <p className="sub-text">A Pokemon Character  store that  accept  Phantom wallet</p>
+
+          
+          {isOwner && (
+            <button className="create-product-button" onClick={() => setCreating(!creating)}>
+              {creating ? "Close" : "Create Product"}
+            </button>
+          )}
         </header>
 
         <main>
-        
+        {creating && <CreateProduct />}
           {publicKey ? renderItemBuyContainer() : renderNotConnectedContainer()}
 
         </main>

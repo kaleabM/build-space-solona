@@ -3,7 +3,7 @@ import { Keypair, Transaction } from "@solana/web3.js";
 import { findReference, FindReferenceError } from "@solana/pay";
 import { useConnection, useWallet } from "@solana/wallet-adapter-react";
 import IPFSDownload from "./IpfsDownload";
-
+import { addOrder, hasPurchased, fetchItem } from '../lib/api';
 const STATUS = {
   Initial: "Initial",
   Submitted: "Submitted",
@@ -15,6 +15,7 @@ export default function Buy({ itemID }) {
   const { publicKey, sendTransaction } = useWallet();
   const orderID = useMemo(() => Keypair.generate().publicKey, []); // Public key used to identify the order
 
+  const [item, setItem] = useState(null); // IPFS hash & filename of the purchased item
   const [loading, setLoading] = useState(false); 
   const [status, setStatus] = useState(STATUS.Initial); // Tracking transaction status
 
@@ -38,7 +39,7 @@ export default function Buy({ itemID }) {
     });
     const txData = await txResponse.json();
 
-    const tx = Transaction.from(Buffer.from(txData.transaction, "base64"));
+    const tx = Transaction.from(Buffer.from(txData.transaction, 'base64'));
     console.log("Tx data is", tx);
 
     try {
@@ -51,6 +52,22 @@ export default function Buy({ itemID }) {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    // Check if this address already has already purchased this item
+    // If so, fetch the item and set paid to true
+    // Async function to avoid blocking the UI
+    async function checkPurchased() {
+      const purchased = await hasPurchased(publicKey, itemID);
+      if (purchased) {
+        setStatus(STATUS.Paid);
+        const item = await fetchItem(itemID);
+        setItem(item);
+      }
+    }
+    checkPurchased();
+  }, [publicKey, itemID]);
+
   
   useEffect(() => {
     // Check if transaction was confirmed
@@ -60,11 +77,13 @@ export default function Buy({ itemID }) {
         try {
           const result = await findReference(connection, orderID);
           console.log("Finding tx reference", result.confirmationStatus);
-          if (result.confirmationStatus === "confirmed" || result.confirmationStatus === "finalized") {
+          if (result.confirmationStatus === "confirmed" ||
+             result.confirmationStatus === "finalized") {
             clearInterval(interval);
             setStatus(STATUS.Paid);
             setLoading(false);
-            alert("Teddaaaaaa....Thank you for your purchase!");
+            addOrder(order);
+            alert("Thank you for your purchase!");
           }
         } catch (e) {
           if (e instanceof FindReferenceError) {
@@ -78,6 +97,14 @@ export default function Buy({ itemID }) {
       return () => {
         clearInterval(interval);
       };
+    }
+    async function getItem(itemID) {
+      const item = await fetchItem(itemID);
+      setItem(item);
+    }
+
+    if (status === STATUS.Paid) {
+      getItem(itemID);
     }
   }, [status]);
 
@@ -93,10 +120,14 @@ export default function Buy({ itemID }) {
 
   return (
     <div>
-      { status === STATUS.Paid ? (
-        <IPFSDownload filename="emojis.zip" hash="QmWWH69mTL66r3H8P4wUn24t1L5pvdTJGUTKBqT11KCHS5" cta="Download emojis"/>
+      { item ? (
+       <IPFSDownload hash={item.hash} filename={item.filename} />
       ) : (
-        <button disabled={loading} className="buy-button" onClick={processTransaction}>
+        <button 
+          disabled={loading} 
+          className="buy-button"
+          onClick={processTransaction}
+          >
           Buy now 🠚
         </button>
       )}

@@ -16,3 +16,14 @@ export default function handler(req, res) {
     res.status(405).send(`Method ${req.method} not allowed`);
   }
 }
+// export const fetchItem = async (itemID) => {
+//   const response = await fetch("../api/fetchItem", {
+//     method: "POST",
+//     headers: {
+//       "Content-Type": "application/json",
+//     },
+//     body: JSON.stringify({ itemID }),
+//   });
+//   const item = await response.json();
+//   return item;
+// }
